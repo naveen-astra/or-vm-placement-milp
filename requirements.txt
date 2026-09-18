@@ -1,0 +1,14 @@
+# Core
+pandas>=2.0
+numpy>=1.24
+pyarrow>=12.0          # parquet cache for the processed VM table
+
+# Optimisation
+pulp>=3.0              # MILP modelling; bundles the CBC solver
+
+# Visualisation
+plotly>=5.18
+matplotlib>=3.7
+
+# Dashboard
+streamlit>=1.30

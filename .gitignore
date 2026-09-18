@@ -1,0 +1,58 @@
+# --- Dataset -----------------------------------------------------------
+# Raw Google Borg trace (314 MB, third-party data, not ours to redistribute).
+borg_traces_data.csv/
+*.csv.gz
+
+# Derived per-VM table (regenerable via scripts/01_preprocess.py; the
+# parquet alone is 7.6 MB of binary data with no diff value in git).
+data/processed/
+
+# --- Python --------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Virtual environments -------------------------------------------------
+venv/
+.venv/
+env/
+ENV/
+
+# --- Test / lint / type-check caches ---------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Jupyter ---------------------------------------------------------------
+.ipynb_checkpoints/
+
+# --- Solver scratch files ---------------------------------------------------
+# PuLP/CBC warm-start artifacts; milp.py already sandboxes these in a temp
+# dir, but this is a backstop in case that ever changes.
+*-pulp.lp
+*-pulp.mst
+*-pulp.sol
+*.lp
+*.mst
+
+# --- Editor / IDE ------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- OS ------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Logs -------------------------------------------------------------------
+*.log
