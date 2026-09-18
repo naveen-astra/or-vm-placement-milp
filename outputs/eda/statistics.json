@@ -1,0 +1,32 @@
+{
+  "n_vms": 237839,
+  "n_collections": 3952,
+  "n_clusters": 8,
+  "n_original_machines": 90109,
+  "total_cpu_request": 4404.768969535824,
+  "total_mem_request": 2654.169117927544,
+  "mean_cpu_request": 0.01851996085392145,
+  "mean_mem_request": 0.011159520170903612,
+  "median_cpu_request": 0.008453369140625,
+  "median_mem_request": 0.0036239624023437,
+  "max_cpu_request": 0.5830078125,
+  "max_mem_request": 0.28662109375,
+  "mean_avg_cpu": 0.009082029475105311,
+  "mean_avg_mem": 0.006066414809716289,
+  "mean_peak_cpu": 0.030081441928022954,
+  "mean_peak_mem": 0.0065901138977986105,
+  "failure_count": 118630,
+  "failure_rate": 0.49878279003863957,
+  "hard_failure_rate": 0.2857226947641051,
+  "mean_duration_s": 25234.96691879801,
+  "median_duration_s": 300.0,
+  "priority_distribution": {
+    "best_effort": 97958,
+    "production": 53230,
+    "free": 33984,
+    "monitoring": 30156,
+    "mid": 22511
+  },
+  "cpu_lower_bound_servers": 4405,
+  "mem_lower_bound_servers": 2655
+}
