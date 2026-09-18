@@ -1,0 +1,65 @@
+{
+  "vm_table": "D:\\Class\\Amrita_Class\\Sem7\\Operations Research - Dr. Shyam\\OR_project\\data\\processed\\vm_table_full.parquet",
+  "n_vms": 250,
+  "n_servers": 10,
+  "sampling_strategy": "stratified",
+  "seed": 42,
+  "config": {
+    "weights": {
+      "alpha": 0.4,
+      "beta": 0.3,
+      "gamma": 0.3
+    },
+    "power": {
+      "horizon_hours": 1.0,
+      "load_proportional": true,
+      "power_driver": "average"
+    },
+    "qos": {
+      "mode": "peak_overcommit",
+      "safety_threshold": 0.85,
+      "failure_weight": 0.5,
+      "priority_weight": 0.5
+    },
+    "wastage": {
+      "imbalance_lambda": 0.5,
+      "wastage_driver": "request"
+    },
+    "fleet": {
+      "n_servers": null,
+      "slack": 2.0,
+      "min_servers": 3,
+      "max_servers": 60,
+      "composition": {
+        "standard": 1.0
+      }
+    },
+    "solver": {
+      "time_limit_s": 90,
+      "mip_gap": 0.01,
+      "threads": 0,
+      "msg": false,
+      "symmetry_breaking": true,
+      "valid_inequalities": true
+    },
+    "label": "base"
+  },
+  "feasibility": {
+    "feasible": true,
+    "n_unplaceable_vms": 0,
+    "unplaceable_vm_ids": [],
+    "total_cpu_demand": 4.975969314575191,
+    "total_mem_demand": 3.0790214538574148,
+    "total_cpu_capacity": 10.0,
+    "total_mem_capacity": 10.0,
+    "cpu_headroom": 5.024030685424809,
+    "mem_headroom": 6.920978546142585,
+    "min_servers_cpu_bound": 5,
+    "min_servers_mem_bound": 4
+  },
+  "normalisers": {
+    "energy_max_wh": 4000.0,
+    "wastage_max": 20.0,
+    "qos_max": 14.368512993918507
+  }
+}

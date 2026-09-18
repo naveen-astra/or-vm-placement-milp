@@ -1,0 +1,11 @@
+server_id,type,cpu_capacity,mem_capacity,idle_power_w,max_power_w
+S001,standard,1.0,1.0,120.0,400.0
+S002,standard,1.0,1.0,120.0,400.0
+S003,standard,1.0,1.0,120.0,400.0
+S004,standard,1.0,1.0,120.0,400.0
+S005,standard,1.0,1.0,120.0,400.0
+S006,standard,1.0,1.0,120.0,400.0
+S007,standard,1.0,1.0,120.0,400.0
+S008,standard,1.0,1.0,120.0,400.0
+S009,standard,1.0,1.0,120.0,400.0
+S010,standard,1.0,1.0,120.0,400.0
