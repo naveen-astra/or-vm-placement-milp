@@ -330,7 +330,7 @@ with tab_data:
              "max_cpu", "max_mem", "priority", "priority_band", "failed",
              "duration_s", "orig_machine_id"]
         ],
-        use_container_width=True, height=280,
+        width="stretch", height=280,
     )
 
     c1, c2 = st.columns(2)
@@ -457,7 +457,7 @@ it is what makes consolidation worth anything. The Sensitivity tab sweeps it.
         )
 
     st.subheader("Server fleet")
-    st.dataframe(fleet, use_container_width=True, height=220)
+    st.dataframe(fleet, width="stretch", height=220)
 
     st.subheader("Feasibility pre-check")
     c = st.columns(4)
@@ -487,7 +487,7 @@ with tab_run:
             "not a bug. Switch to `peak_overcommit` for an active QoS term."
         )
 
-    go_btn = st.button("Solve", type="primary", use_container_width=True)
+    go_btn = st.button("Solve", type="primary", width="stretch")
 
     if go_btn:
         norm = build_normalisers(workload, fleet, cfg)
@@ -515,11 +515,13 @@ with tab_run:
                 f"**No verified MILP solution.** Status `{mres.status}`. "
                 f"{mres.notes}"
             )
-        elif mres.status != "Optimal":
+        elif mres.status != "Optimal":  # incl. "Feasible (time limit)"
+            gap_txt = (f" Remaining optimality gap: {mres.mip_gap:.1%}."
+                       if mres.mip_gap is not None else "")
             st.warning(
                 f"Solver stopped with status `{mres.status}` after "
                 f"{mres.runtime_s:.1f}s. The placement below is feasible but "
-                "not proven optimal."
+                f"not proven optimal.{gap_txt}"
             )
         else:
             st.success(
@@ -587,7 +589,7 @@ with tab_run:
                 merged[["vm_id", "server_id", "cpu_request", "mem_request",
                         "max_cpu", "priority_band", "failed",
                         "orig_machine_id"]],
-                use_container_width=True, height=380,
+                width="stretch", height=380,
             )
             st.download_button(
                 "Download assignment CSV",
@@ -624,7 +626,7 @@ with tab_compare:
                 "mem_util_active_mean": "{:.1%}",
                 "weighted_objective": "{:.5f}", "runtime_s": "{:.2f}",
             }),
-            use_container_width=True,
+            width="stretch",
         )
 
         st.caption(
@@ -751,7 +753,7 @@ with tab_sens:
         kind, df, xcol, xlab = st.session_state["sweep"]
         st.subheader(kind)
         st.dataframe(sensitivity.summarise_sweep(df),
-                     use_container_width=True, height=280)
+                     width="stretch", height=280)
 
         if kind == "Pareto frontier":
             fig = px.scatter_3d(
