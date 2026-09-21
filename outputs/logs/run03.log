@@ -1,0 +1,125 @@
+loading D:\Class\Amrita_Class\Sem7\Operations Research - Dr. Shyam\OR_project\data\processed\vm_table_full.parquet
+  pool: 237,839 VMs
+
+instance: 250 VMs, 11 servers, 2,750 binary x-variables
+  demand cpu=5.01 mem=3.08  capacity cpu=11.00 mem=11.00
+  bin-packing lower bound on active servers: 6
+
+=== 1. baseline versus optimised ===
+  MILP: Optimal in 20.7s
+              method  n_active_servers   energy_wh   wastage  qos_overcommit  cpu_util_active_mean  mem_util_active_mean  weighted_objective  n_capacity_violations  runtime_s
+           First-Fit                 6 1410.428263  4.868371        7.768615              0.835093              0.514039            0.356617                      0   0.001727
+            Best-Fit                 6 1410.428263  4.868371        7.768615              0.835093              0.514039            0.356617                      0   0.003607
+First-Fit-Decreasing                 6 1410.428263  4.868371        7.689513              0.835093              0.514039            0.354967                      0   0.002298
+      Trace-Original                11 2010.428263 14.985608        3.777134              0.455506              0.280385            0.465885                      0   0.001143
+                MILP                 6 1410.428263  4.868371        6.985038              0.835093              0.514039            0.340276                      0  20.677458
+
+  MILP vs First-Fit-Decreasing:
+    active servers 6 -> 6
+    energy 1410.4 Wh -> 1410.4 Wh (+0.00%)
+    objective 0.35497 -> 0.34028
+
+=== 2. objective-weight sensitivity ===
+    [1/7] weights a=0.7,b=0.2,g=0.1
+    [2/7] weights a=0.4,b=0.3,g=0.3
+    [3/7] weights a=0.2,b=0.2,g=0.6
+    [4/7] weights a=0.2,b=0.6,g=0.2
+    [5/7] weights a=1,b=0,g=0
+    [6/7] weights a=0,b=1,g=0
+    [7/7] weights a=0,b=0,g=1
+         scenario  n_active_servers   energy_wh   wastage  qos_overcommit  cpu_util_active_mean  runtime_s
+a=0.7,b=0.2,g=0.1                 6 1410.428263  4.950883        6.938137              0.835093   4.710781
+a=0.4,b=0.3,g=0.3                 6 1410.428263  4.868371        6.985038              0.835093  20.817797
+a=0.2,b=0.2,g=0.6                11 2010.428263 14.868371        2.688137              0.455506   5.130650
+a=0.2,b=0.6,g=0.2                 6 1410.428263  4.868371        6.938137              0.835093   4.238242
+      a=1,b=0,g=0                 6 1410.428263  4.868371        7.689513              0.835093   2.677341
+      a=0,b=1,g=0                 6 1410.428263  4.868371        7.689513              0.835093   3.614587
+      a=0,b=0,g=1                11 2010.428263 14.890577        2.711635              0.455506   1.091797
+
+=== 3. workload-size sensitivity ===
+    [1/4] size n_vms=125
+    [2/4] size n_vms=187
+    [3/4] size n_vms=250
+    [4/4] size n_vms=375
+ scenario  n_servers_in_fleet  n_active_servers   energy_wh  cpu_util_active_mean  status  runtime_s
+n_vms=125                   5                 3  729.075915              0.803154 Optimal   0.442060
+n_vms=187                   8                 4  978.326670              0.899668 Optimal   1.104597
+n_vms=250                  11                 6 1410.428263              0.835093 Optimal  23.259914
+n_vms=375                  16                 8 1956.566289              0.947868 Optimal 120.500215
+
+=== 4. power-assumption sensitivity (idle/max ratio) ===
+    [1/6] idle idle=20% of max
+    [2/6] idle idle=30% of max
+    [3/6] idle idle=40% of max
+    [4/6] idle idle=50% of max
+    [5/6] idle idle=60% of max
+    [6/6] idle idle=70% of max
+       scenario  n_active_servers   energy_wh  cpu_util_active_mean  runtime_s
+idle=20% of max                 6 1269.060872              0.835093  13.760666
+idle=30% of max                 6 1410.428263              0.835093  25.415338
+idle=40% of max                 6 1551.795654              0.835093  15.004993
+idle=50% of max                 6 1693.163045              0.835093   8.887563
+idle=60% of max                 6 1834.530436              0.835093  13.207080
+idle=70% of max                 6 1975.897827              0.835093   4.782256
+
+=== 5. QoS safety-threshold sensitivity ===
+    [1/6] theta safety_threshold=0.6
+    [2/6] theta safety_threshold=0.7
+    [3/6] theta safety_threshold=0.8
+    [4/6] theta safety_threshold=0.85
+    [5/6] theta safety_threshold=0.9
+    [6/6] theta safety_threshold=1.0
+             scenario  n_active_servers   energy_wh  qos_overcommit  cpu_util_active_mean
+ safety_threshold=0.6                 6 1410.428263        8.438137              0.835093
+ safety_threshold=0.7                 6 1410.428263        7.838137              0.835093
+ safety_threshold=0.8                 6 1410.428263        7.238137              0.835093
+safety_threshold=0.85                 6 1410.428263        6.985038              0.835093
+ safety_threshold=0.9                 6 1410.428263        6.638137              0.835093
+ safety_threshold=1.0                 6 1410.428263        6.038137              0.835093
+
+=== 6. MILP scaling behaviour ===
+    n=50   servers=3   binaries=150    Optimal                gap=0.0    0.2s
+    n=100  servers=4   binaries=400    Optimal                gap=0.0    0.3s
+    n=150  servers=6   binaries=900    Optimal                gap=0.0    0.6s
+    n=200  servers=9   binaries=1800   Optimal                gap=0.01    1.8s
+    n=300  servers=13  binaries=3900   Optimal                gap=0.0   85.0s
+    n=375  servers=16  binaries=6000   Optimal                gap=0.0  151.6s
+    n=400  servers=17  binaries=6800   Feasible (time limit)  gap=0.02  213.5s
+
+=== 6b. stress instances (band sampling, multiple seeds) ===
+    band[0.3,0.45) n=40 seed=100: FFD 0.45794 -> MILP 0.44154 (+3.58%) Feasible (time limit) gap=0.03 60s
+    band[0.3,0.45) n=40 seed=101: FFD 0.44851 -> MILP 0.44690 (+0.36%) Optimal gap=0.0 1s
+    band[0.3,0.45) n=40 seed=102: FFD 0.45306 -> MILP 0.45108 (+0.44%) Optimal gap=0.0 1s
+    band[0.3,0.45) n=40 seed=103: FFD 0.45484 -> MILP 0.44757 (+1.60%) Feasible (time limit) gap=0.0 60s
+    band[0.3,0.45) n=40 seed=104: FFD 0.44895 -> MILP 0.44220 (+1.50%) Optimal gap=0.0 1s
+    band[0.2,0.45) n=60 seed=100: FFD 0.41328 -> MILP 0.35820 (+13.33%) Feasible (time limit) gap=0.15 60s
+    band[0.2,0.45) n=60 seed=101: FFD 0.40494 -> MILP 0.33018 (+18.46%) Feasible (time limit) gap=0.14 60s
+    band[0.2,0.45) n=60 seed=102: FFD 0.40351 -> MILP 0.36158 (+10.39%) Feasible (time limit) gap=0.13 60s
+    band[0.2,0.45) n=60 seed=103: FFD 0.40807 -> MILP 0.34337 (+15.86%) Feasible (time limit) gap=0.16 60s
+    band[0.2,0.45) n=60 seed=104: FFD 0.40296 -> MILP 0.30932 (+23.24%) Feasible (time limit) gap=0.1 60s
+
+=== 7. Pareto frontier ===
+    [1/21] pareto a=0.00,b=0.00,g=1.00
+    [2/21] pareto a=0.00,b=0.20,g=0.80
+    [3/21] pareto a=0.00,b=0.40,g=0.60
+    [4/21] pareto a=0.00,b=0.60,g=0.40
+    [5/21] pareto a=0.00,b=0.80,g=0.20
+    [6/21] pareto a=0.00,b=1.00,g=0.00
+    [7/21] pareto a=0.20,b=0.00,g=0.80
+    [8/21] pareto a=0.20,b=0.20,g=0.60
+    [9/21] pareto a=0.20,b=0.40,g=0.40
+    [10/21] pareto a=0.20,b=0.60,g=0.20
+    [11/21] pareto a=0.20,b=0.80,g=0.00
+    [12/21] pareto a=0.40,b=0.00,g=0.60
+    [13/21] pareto a=0.40,b=0.20,g=0.40
+    [14/21] pareto a=0.40,b=0.40,g=0.20
+    [15/21] pareto a=0.40,b=0.60,g=0.00
+    [16/21] pareto a=0.60,b=0.00,g=0.40
+    [17/21] pareto a=0.60,b=0.20,g=0.20
+    [18/21] pareto a=0.60,b=0.40,g=0.00
+    [19/21] pareto a=0.80,b=0.00,g=0.20
+    [20/21] pareto a=0.80,b=0.20,g=0.00
+    [21/21] pareto a=1.00,b=0.00,g=0.00
+  5 non-dominated of 21 weight combinations
+
+all results written to D:\Class\Amrita_Class\Sem7\Operations Research - Dr. Shyam\OR_project\outputs\experiments
