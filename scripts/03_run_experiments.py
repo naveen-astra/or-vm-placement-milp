@@ -82,6 +82,12 @@ def main() -> None:
     ap.add_argument("--pareto", action="store_true",
                     help="also compute the Pareto frontier (slow)")
     ap.add_argument("--skip-scaling", action="store_true")
+    ap.add_argument("--skip-stress", action="store_true")
+    ap.add_argument("--stress-seeds", type=int, default=5,
+                    help="number of random instances per stress configuration")
+    ap.add_argument("--stress-time-limit", type=int, default=60)
+    ap.add_argument("--scaling-sizes", type=int, nargs="*",
+                    default=[50, 100, 150, 200, 300, 375, 400])
     args = ap.parse_args()
 
     outdir = os.path.join(OUTPUT_DIR, "experiments")
@@ -227,7 +233,7 @@ def main() -> None:
     if not args.skip_scaling:
         print("\n=== 6. MILP scaling behaviour ===")
         rows = []
-        for n in [50, 100, 150, 200, 300]:
+        for n in args.scaling_sizes:
             w = pp.sample_vms(pool, n, strategy=args.strategy, seed=args.seed)
             cfg = ScenarioConfig(
                 weights=Weights(0.4, 0.3, 0.3),
@@ -249,12 +255,60 @@ def main() -> None:
                 "n_active_servers": r.metrics["n_active_servers"],
                 "objective": r.metrics["weighted_objective"],
                 "milp_solution_used": r.metrics.get("milp_solution_used"),
+                "mip_gap": r.mip_gap,
+                "lower_bound": r.metrics.get("milp_lower_bound"),
+                "proven_optimal": r.metrics.get("milp_proven_optimal"),
             })
             print(f"    n={n:<4} servers={len(f):<3} "
-                  f"binaries={n*len(f):<6} {r.status:<12} "
-                  f"{r.runtime_s:6.1f}s", flush=True)
+                  f"binaries={n*len(f):<6} {r.status:<22} "
+                  f"gap={r.mip_gap} {r.runtime_s:6.1f}s", flush=True)
         sc = pd.DataFrame(rows)
         sc.to_csv(os.path.join(outdir, "scaling.csv"), index=False)
+
+    # ================================================================
+    # 6b. stress instances (where exact optimisation can win)
+    # ================================================================
+    if not args.skip_stress:
+        print("\n=== 6b. stress instances (band sampling, multiple seeds) ===")
+        rows = []
+        for (lo, hi, n) in [(0.30, 0.45, 40), (0.20, 0.45, 60)]:
+            for sd in range(args.stress_seeds):
+                seed = 100 + sd
+                w = pp.sample_vms(pool, n, strategy="band", seed=seed,
+                                  band=(lo, hi))
+                cfg = ScenarioConfig(
+                    weights=Weights(0.4, 0.3, 0.3),
+                    fleet=FleetConfig(slack=1.4, max_servers=200),
+                    solver=SolverConfig(time_limit_s=args.stress_time_limit,
+                                        mip_gap=0.0),
+                )
+                f = sv.build_fleet(w, cfg.fleet)
+                nm = build_normalisers(w, f, cfg)
+                fe = sv.feasibility_report(w, f)
+                lb_srv = max(fe["min_servers_cpu_bound"],
+                             fe["min_servers_mem_bound"])
+                rb = baselines.run_baseline("First-Fit-Decreasing", w, f, cfg, nm)
+                r = milp.solve(w, f, cfg, normalisers=nm)
+                zb = rb.metrics["weighted_objective"]
+                zm = r.metrics["weighted_objective"]
+                rows.append({
+                    "band_lo": lo, "band_hi": hi, "n_vms": n, "seed": seed,
+                    "n_servers": len(f), "server_lower_bound": lb_srv,
+                    "ffd_servers": rb.metrics["n_active_servers"],
+                    "milp_servers": r.metrics["n_active_servers"],
+                    "z_ffd": zb, "z_milp": zm,
+                    "improvement_pct": (zb - zm) / zb * 100 if zb else None,
+                    "status": r.status, "mip_gap": r.mip_gap,
+                    "milp_lower_bound": r.metrics.get("milp_lower_bound"),
+                    "proven_optimal": r.metrics.get("milp_proven_optimal"),
+                    "runtime_s": r.runtime_s,
+                })
+                print(f"    band[{lo},{hi}) n={n} seed={seed}: FFD {zb:.5f} -> "
+                      f"MILP {zm:.5f} ({rows[-1]['improvement_pct']:+.2f}%) "
+                      f"{r.status} gap={r.mip_gap} {r.runtime_s:.0f}s",
+                      flush=True)
+        st_df = pd.DataFrame(rows)
+        st_df.to_csv(os.path.join(outdir, "stress.csv"), index=False)
 
     # ================================================================
     # 7. Pareto frontier (optional, slow)
