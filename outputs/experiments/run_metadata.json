@@ -1,7 +1,7 @@
 {
   "vm_table": "D:\\Class\\Amrita_Class\\Sem7\\Operations Research - Dr. Shyam\\OR_project\\data\\processed\\vm_table_full.parquet",
   "n_vms": 250,
-  "n_servers": 10,
+  "n_servers": 11,
   "sampling_strategy": "stratified",
   "seed": 42,
   "config": {
@@ -35,7 +35,7 @@
       }
     },
     "solver": {
-      "time_limit_s": 90,
+      "time_limit_s": 200,
       "mip_gap": 0.01,
       "threads": 0,
       "msg": false,
@@ -48,18 +48,18 @@
     "feasible": true,
     "n_unplaceable_vms": 0,
     "unplaceable_vm_ids": [],
-    "total_cpu_demand": 4.975969314575191,
-    "total_mem_demand": 3.0790214538574148,
-    "total_cpu_capacity": 10.0,
-    "total_mem_capacity": 10.0,
-    "cpu_headroom": 5.024030685424809,
-    "mem_headroom": 6.920978546142585,
-    "min_servers_cpu_bound": 5,
+    "total_cpu_demand": 5.010560989379879,
+    "total_mem_demand": 3.0842323303222585,
+    "total_cpu_capacity": 11.0,
+    "total_mem_capacity": 11.0,
+    "cpu_headroom": 5.989439010620121,
+    "mem_headroom": 7.9157676696777415,
+    "min_servers_cpu_bound": 6,
     "min_servers_mem_bound": 4
   },
   "normalisers": {
-    "energy_max_wh": 4000.0,
-    "wastage_max": 20.0,
-    "qos_max": 14.368512993918507
+    "energy_max_wh": 4400.0,
+    "wastage_max": 22.0,
+    "qos_max": 14.385491513146277
   }
 }
