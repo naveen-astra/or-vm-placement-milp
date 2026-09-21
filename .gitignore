@@ -57,5 +57,5 @@ desktop.ini
 # --- Logs -------------------------------------------------------------------
 *.log
 
-!outputs/logs/
+!outputs/logs/run03.log
 outputs/logs/tests.log
