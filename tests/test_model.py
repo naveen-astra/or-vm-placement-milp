@@ -441,5 +441,44 @@ def test_power_model_is_monotone_and_bounded():
     assert st.power_at(99.0) == pytest.approx(st.max_power_w)    # clipped
 
 
+# ==========================================================================
+# Solver status honesty
+# ==========================================================================
+def test_cbc_log_parsing_distinguishes_optimal_from_time_limit(tmp_path):
+    """PuLP labels a time-limited incumbent "Optimal"; the log says otherwise.
+
+    Trusting PuLP's label made unproven results look proven, so the real
+    termination reason and gap are read from CBC's own summary.
+    """
+    stopped = tmp_path / "stopped.log"
+    stopped.write_text(
+        "Result - Stopped on time limit\n\n"
+        "Objective value:                0.30921686\n"
+        "Lower bound:                    0.262\n"
+        "Gap:                            0.18\n"
+    )
+    r = milp._parse_cbc_log(str(stopped))
+    assert "stopped on" in r["result"]
+    assert r["objective"] == pytest.approx(0.30921686)
+    assert r["lower_bound"] == pytest.approx(0.262)
+    assert r["gap"] == pytest.approx(0.18)
+
+    proven = tmp_path / "proven.log"
+    proven.write_text("Result - Optimal solution found\n\nObjective value:   0.5\n")
+    r2 = milp._parse_cbc_log(str(proven))
+    assert "optimal solution found" in r2["result"]
+    assert r2["gap"] is None
+
+    assert milp._parse_cbc_log(str(tmp_path / "missing.log"))["result"] is None
+
+
+def test_proven_optimal_flag_set_on_small_instance(instance):
+    vms, fleet, cfg = instance
+    res = milp.solve(vms, fleet, cfg)
+    assert res.metrics["milp_solution_used"] == 1
+    assert res.status == "Optimal"
+    assert res.metrics["milp_proven_optimal"] == 1
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v", "--tb=short"]))
