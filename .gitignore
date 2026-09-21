@@ -56,3 +56,6 @@ desktop.ini
 
 # --- Logs -------------------------------------------------------------------
 *.log
+
+!outputs/logs/
+outputs/logs/tests.log
