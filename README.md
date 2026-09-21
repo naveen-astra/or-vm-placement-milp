@@ -17,19 +17,20 @@ pip install -r requirements.txt
 
 python scripts/01_preprocess.py          # trace -> per-VM table  (~10 s)
 python scripts/02_eda.py                 # statistics and figures
-python scripts/03_run_experiments.py     # full experimental run  (~10 min)
+python scripts/03_run_experiments.py --pareto   # full experimental run (~40 min)
 python scripts/04_figures.py             # report figures
 
 streamlit run app/streamlit_app.py       # interactive dashboard
-python -m pytest tests/ -q               # 22 model-invariant tests
+python -m pytest tests/ -q               # 24 model-invariant tests
 ```
 
 `scripts/01_preprocess.py` must run first; everything else reads its output
 from `data/processed/`.
 
-**Measured results are in [docs/RESULTS.md](docs/RESULTS.md)** — including the
-finding that on representative Google workloads the MILP *ties* greedy
-heuristics, and why.
+**Start with the technical report:** [docs/REPORT.md](docs/REPORT.md).
+Measured result tables are in [docs/RESULTS.md](docs/RESULTS.md), the model is
+in [docs/formulation.md](docs/formulation.md), and the literature review is
+[docs/literature_review.md](docs/literature_review.md).
 
 ## Layout
 
@@ -42,10 +43,11 @@ src/vmplace/
   baselines.py    First-Fit, Best-Fit, First-Fit-Decreasing, trace placement
   metrics.py      one evaluator shared by the MILP and every baseline
   sensitivity.py  weight / parameter sweeps and Pareto frontier
-scripts/          01 preprocess, 02 EDA, 03 experiments
+scripts/          01 preprocess, 02 EDA, 03 experiments, 04 figures
 app/              Streamlit dashboard
-docs/             formulation.md -- the full mathematical statement
-outputs/          generated figures and result CSVs
+tests/            24 model-invariant tests
+docs/             REPORT, RESULTS, formulation, literature review
+outputs/          generated figures, result CSVs and run logs
 ```
 
 ## The model in brief
@@ -103,8 +105,10 @@ comes from an actual solve. Nothing in this repository contains mock figures.
 The bundled solver is CBC, via PuLP.
 
 - Model size grows as $|I|\cdot|J|$ binaries. On this machine CBC proves
-  optimality comfortably up to a few thousand binaries; past that the time
-  limit binds and the result is reported as feasible-but-unproven with its gap.
+  optimality through about 6,000 binaries (152 s); at about 6,800 the time limit
+  binds and the result is reported as `Feasible (time limit)` with its gap.
+- PuLP labels time-limited solves "Optimal". This project parses CBC's own log
+  instead, so `Optimal` means proven and `Feasible (time limit)` means not.
 - Every solve is **warm-started from First-Fit-Decreasing**, which both speeds
   up the search and guarantees that a timed-out run still returns a feasible
   placement at least as good as the heuristic.
@@ -130,28 +134,29 @@ of thousands of machines against this fleet's handful, so its active-server
 count is not comparable. First-Fit-Decreasing is the baseline the MILP has to
 justify itself against.
 
-### The headline finding, stated up front
+### The headline findings
 
-On **representative** Google workloads the MILP **ties** First-Fit-Decreasing
-exactly. That is not a bug. The median VM requests 0.85 % of a machine, and
-packing items that small is easy — FFD lands on the bin-packing lower bound and
-nothing can beat it. What the MILP adds there is a *proof* of optimality, which
-a heuristic structurally cannot give.
+On the 250-VM reference instance the MILP is **proven optimal** and beats
+First-Fit-Decreasing by **4.1 %**, but at the *same* server count and energy:
+6 servers is the bin-packing lower bound, so nothing can use fewer. The whole
+gain is lower QoS risk, because a size-only heuristic cannot see which VMs are
+bursty or failure-prone. **No energy saving over a good heuristic is claimed.**
 
-The exact method earns its cost in two places:
+- **Trade-off.** Raising the QoS weight from 0.3 to 0.6 switches on every server
+  (6 to 11), trading +42.5 % energy for a 61.5 % lower QoS penalty. The response
+  is a step, not a curve, because placement changes in whole servers.
+- **Robustness.** The chosen placement is identical for assumed idle-power
+  ratios from 20 % to 70 %.
+- **Hard instances.** For VMs sized at a quarter to a third of a machine the
+  MILP improves on FFD by 1.5 % to 16 % on average, always at the same server
+  count. The larger gains (10-23 %) are **not proven optimal** (gaps 10-16 %).
 
-- **Tight instances.** Sampling mid-sized VMs (`--strategy band`) produces real
-  bin-packing difficulty, where the MILP improves the objective by up to
-  **20.5 %** — mostly through better balance, not fewer servers.
-- **The multi-objective regime.** Past γ ≈ 0.6 the optimiser deliberately
-  *de-consolidates* (5 → 10 servers), paying +46.5 % energy for −54.3 % QoS
-  risk. No bin-packing heuristic will ever do that, because FFD has no notion of
-  QoS at all.
-
-Full numbers in [docs/RESULTS.md](docs/RESULTS.md).
+Full numbers, caveats and what the study does not show:
+[docs/RESULTS.md](docs/RESULTS.md).
 
 ## Dataset
 
 Google cluster-usage traces v3 (2019), `borg_traces_data.csv`, 328 MB.
-Not redistributed here; place it at `borg_traces_data/borg_traces_data.csv`
+Not redistributed here; place it at `borg_traces_data.csv/borg_traces_data.csv`
+(a folder named `borg_traces_data.csv` containing the file of the same name)
 or point `--path` at your copy.
