@@ -66,6 +66,7 @@ from __future__ import annotations
 import contextlib
 import math
 import os
+import re
 import shutil
 import tempfile
 import time
@@ -80,7 +81,8 @@ from .metrics import Normalisers, build_normalisers, evaluate_placement, risk_we
 from .metrics import PlacementResult
 
 
-def _solver(cfg: ScenarioConfig, warm: bool = False):
+def _solver(cfg: ScenarioConfig, warm: bool = False,
+            log_path: Optional[str] = None):
     """CBC, configured from SolverConfig.
 
     CBC on Windows only honours a warm start when keepFiles=True, which makes
@@ -97,7 +99,40 @@ def _solver(cfg: ScenarioConfig, warm: bool = False):
     )
     if cfg.solver.threads and cfg.solver.threads > 0:
         kwargs["threads"] = int(cfg.solver.threads)
+    if log_path:
+        kwargs["logPath"] = log_path
     return pulp.PULP_CBC_CMD(**kwargs)
+
+
+def _parse_cbc_log(path: str) -> dict:
+    """Extract the final result, objective, lower bound and gap from a CBC log.
+
+    PuLP reports LpStatus "Optimal" even when CBC merely stopped on its time
+    limit with a feasible incumbent (sol_status 2, "Solution Found").  Trusting
+    that label would make every time-limited run look proven optimal, so the
+    real termination reason and the bound are read from CBC's own summary.
+    """
+    out = {"result": None, "objective": None, "lower_bound": None, "gap": None}
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as fh:
+            text = fh.read()
+    except OSError:
+        return out
+    m = re.search(r"Result - (.+)", text)
+    if m:
+        out["result"] = m.group(1).strip().lower()
+    for key, pat in (
+        ("objective", r"Objective value:\s+([-0-9.eE+]+)"),
+        ("lower_bound", r"Lower bound:\s+([-0-9.eE+]+)"),
+        ("gap", r"Gap:\s+([-0-9.eE+]+)"),
+    ):
+        mm = re.search(pat, text)
+        if mm:
+            try:
+                out[key] = float(mm.group(1))
+            except ValueError:
+                pass
+    return out
 
 
 @contextlib.contextmanager
@@ -329,9 +364,11 @@ def solve(
     warm = fallback is not None
     t1 = time.perf_counter()
     solver_error: Optional[str] = None
+    log_dir = tempfile.mkdtemp(prefix="vmplace_log_")
+    log_path = os.path.join(log_dir, "cbc.log")
     try:
         with _scratch_cwd(warm):
-            status_code = prob.solve(_solver(cfg, warm=warm))
+            status_code = prob.solve(_solver(cfg, warm=warm, log_path=log_path))
         status = pulp.LpStatus[status_code]
     except Exception as exc:
         # CBC is an external process and can fail outright rather than return
@@ -341,6 +378,14 @@ def solve(
         # object it can render.
         solver_error = f"{type(exc).__name__}: {exc}"
         status = "Solver error"
+    cbc = _parse_cbc_log(log_path)
+    shutil.rmtree(log_dir, ignore_errors=True)
+
+    # Replace PuLP's misleading "Optimal" with what CBC actually did.
+    if solver_error is None and status == "Optimal":
+        r = cbc["result"] or ""
+        if "stopped on" in r or getattr(prob, "sol_status", 1) == 2:
+            status = "Feasible (time limit)"
     solve_s = time.perf_counter() - t1
     runtime = build_s + solve_s
 
@@ -397,14 +442,11 @@ def solve(
             "No solution found",
         )
 
-    gap = None
-    try:
-        obj = pulp.value(prob.objective)
-        bound = getattr(prob, "bestBound", None)
-        if bound is not None and obj is not None:
-            gap = abs(obj - bound) / max(abs(obj), 1e-12)
-    except Exception:
-        gap = None
+    # Gap as reported by CBC.  A proven-optimal run has gap <= the requested
+    # tolerance, so CBC's own (possibly absent) figure is replaced by 0.
+    gap = cbc["gap"]
+    if status == "Optimal" and gap is None:
+        gap = 0.0
 
     res = evaluate_placement(
         vms, servers, assignment, cfg,
@@ -422,6 +464,8 @@ def solve(
     res.metrics["n_binary_vars"] = len(I) * len(J) + len(J)
     res.metrics["n_constraints"] = len(prob.constraints)
     res.metrics["milp_solution_used"] = 1
+    res.metrics["milp_lower_bound"] = cbc["lower_bound"]
+    res.metrics["milp_proven_optimal"] = int(status == "Optimal")
 
     # Cross-check: the objective CBC reports and the objective metrics.py
     # measures must agree, or model and evaluator have drifted apart.
