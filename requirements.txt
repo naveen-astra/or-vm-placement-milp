@@ -11,4 +11,4 @@ plotly>=5.18
 matplotlib>=3.7
 
 # Dashboard
-streamlit>=1.30
+streamlit>=1.50
