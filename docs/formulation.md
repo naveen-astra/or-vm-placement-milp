@@ -315,14 +315,18 @@ than glossed.
 
 ## 9. References
 
+Verified against publisher/indexing pages; see `docs/literature_review.md` for
+the discussion.
+
 - Beloglazov, A., & Buyya, R. (2012). Optimal online deterministic algorithms
   and adaptive heuristics for energy and performance efficient dynamic
-  consolidation of virtual machines. *CCPE*, 24(13).
+  consolidation of virtual machines in Cloud data centers. *Concurrency and
+  Computation: Practice and Experience*, 24(13), 1397-1420.
 - Gao, Y., Guan, H., Qi, Z., Hou, Y., & Liu, L. (2013). A multi-objective ant
   colony system algorithm for virtual machine placement in cloud computing.
-  *JCSS*, 79(8).
-- Regaieg, R., Koubàa, M., Ales, Z., & Aguili, T. (2021). Multi-objective
+  *Journal of Computer and System Sciences*, 79(8), 1230-1242.
+- Regaieg, R., Koubaa, M., Ales, Z., & Aguili, T. (2021). Multi-objective
   optimization for VM placement in homogeneous and heterogeneous cloud service
-  provider data centers. *Computing*, 103.
-- Tirmazi, M., et al. (2020). Borg: the Next Generation. *EuroSys '20*.
-- Google (2020). Google cluster-usage traces v3.
+  provider data centers. *Computing*, 103, 1255-1279.
+- Tirmazi, M., et al. (2020). Borg: the next generation. *EuroSys '20*.
+- Google (2019). Google cluster-usage traces, version 3.
