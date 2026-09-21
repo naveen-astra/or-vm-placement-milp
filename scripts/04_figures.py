@@ -252,6 +252,43 @@ def fig_scaling() -> None:
     print(f"  {p}")
 
 
+def fig_stress() -> None:
+    df = _read("stress.csv")
+    if df is None:
+        return
+    df = df.copy()
+    df["label"] = [
+        f"[{a:.2f},{b:.2f})\nn={n} s{sd}"
+        for a, b, n, sd in zip(df["band_lo"], df["band_hi"], df["n_vms"],
+                               df["seed"])
+    ]
+    x = np.arange(len(df))
+    w = 0.38
+    fig, ax = plt.subplots(1, 2, figsize=(13, 4.6))
+    ax[0].bar(x - w / 2, df["z_ffd"], w, label="First-Fit-Decreasing",
+              color=PALETTE[1])
+    ax[0].bar(x + w / 2, df["z_milp"], w, label="MILP", color=PALETTE[0])
+    ax[0].set_xticks(x)
+    ax[0].set_xticklabels(df["label"], rotation=60, ha="right", fontsize=7)
+    ax[0].set_ylabel("weighted objective Z (lower is better)")
+    ax[0].set_title("Stress instances: MILP vs FFD", fontweight="bold")
+    ax[0].legend()
+
+    proven = df["proven_optimal"].fillna(0).astype(int) == 1
+    ax[1].bar(x, df["improvement_pct"],
+              color=[PALETTE[2] if p else PALETTE[4] for p in proven])
+    ax[1].set_xticks(x)
+    ax[1].set_xticklabels(df["label"], rotation=60, ha="right", fontsize=7)
+    ax[1].set_ylabel("improvement over FFD (%)")
+    ax[1].set_title("Green = proven optimal, purple = time-limited",
+                    fontweight="bold")
+    fig.tight_layout()
+    out = os.path.join(FIG, "stress.png")
+    fig.savefig(out)
+    plt.close(fig)
+    print(f"  {out}")
+
+
 def fig_server_loads() -> None:
     df = _read("optimal_server_loads.csv")
     if df is None:
@@ -315,6 +352,7 @@ def main() -> None:
         fig_workload_sensitivity,
         fig_threshold_sensitivity,
         fig_scaling,
+        fig_stress,
         fig_server_loads,
         fig_pareto,
     ]:
